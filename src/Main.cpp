@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include <sdl/SDL.h>
 
 using namespace std;
 
@@ -33,10 +33,23 @@ int main(int argc, char* argv[])
             if(e.type == SDL_QUIT) { running = false; }  
             if(e.type == SDL_KEYDOWN)
             {
-                if(e.key.keysym.sym == SDLK_DOWN) { dir = DOWN; }
+                /*if(e.key.keysym.sym == SDLK_DOWN) { dir = DOWN; }
                 if(e.key.keysym.sym == SDLK_UP) { dir = UP; }
                 if(e.key.keysym.sym == SDLK_LEFT) { dir = LEFT; }
-                if(e.key.keysym.sym == SDLK_RIGHT) { dir = RIGHT; }
+                if(e.key.keysym.sym == SDLK_RIGHT) { dir = RIGHT; } */
+
+                switch(e.key.keysym.sym)
+                {
+                    case SDLK_DOWN: dir = DOWN; break;
+                    case SDLK_UP: dir = UP; break;
+                    case SDLK_LEFT: dir = LEFT; break;
+                    case SDLK_RIGHT: dir = RIGHT; break;
+
+                    case SDLK_s: dir = DOWN; break;
+                    case SDLK_w: dir = UP; break;
+                    case SDLK_a: dir = LEFT; break;
+                    case SDLK_d: dir = RIGHT; break;
+                }
             }
         }
 
