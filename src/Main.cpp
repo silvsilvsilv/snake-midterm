@@ -14,9 +14,9 @@ class Color
     public:
         int r,g,b;
 
-        void changeColor()
+        void changeColor(int color = rand()%12+1)
             {
-                int color = rand()%12+1;
+                
 
                 switch( color )
                 {
@@ -60,7 +60,7 @@ class Color
             }
 };
 
-Color color;
+Color colors;
 int main(int argc, char* argv[])
 {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -81,22 +81,37 @@ int main(int argc, char* argv[])
 
     bool running = true;
     int dir = 0;
-    
 
     SDL_Rect head {(WINDOW_WIDTH/2),(WINDOW_LENGTH/2),10,10}; //initializing of the "snake" in the middle of the window
     
-    std::deque<SDL_Rect> rq;
+    std::deque<SDL_Rect> snakeBody;
     int size = 0;
 
     std::vector<SDL_Rect> apples;
     int numOfApple = 0;
+
+    std::vector<SDL_Rect> borderBlock;
+    for(int i = 0 ;i <= WINDOW_WIDTH-10; i++)//for x
+    {
+        borderBlock.emplace_back(SDL_Rect{i,0,10,10}); //upper part
+        borderBlock.emplace_back(SDL_Rect{i,690,10,10}); //bottom part
+    }
+    for(int i = 0; i <= WINDOW_LENGTH - 10; i++)// for y
+    {
+        borderBlock.emplace_back(SDL_Rect{0,i,10,10}); //left part
+        borderBlock.emplace_back(SDL_Rect{890,i,10,10}); //right part
+    }
 
     //main game loop
     while(running)
     {
         while(SDL_PollEvent(&e)) //handle input
         {
-            if(e.type == SDL_QUIT) { running = false; }  
+            if(e.type == SDL_QUIT) 
+            { 
+                running = false; 
+            }
+
             if(e.type == SDL_KEYDOWN)
             {
                 switch(e.key.keysym.sym) //controls 
@@ -126,6 +141,7 @@ int main(int argc, char* argv[])
             int h = 10;
             apples.emplace_back(SDL_Rect{x, y,w,h});
 
+            //for debugging
             // std::cout << "X is: " << x << "\nY is: " << y << "\n\n";
             numOfApple++;
         }
@@ -144,43 +160,48 @@ int main(int argc, char* argv[])
 
         //handles death conditions for snake
         //this handles if snake has collided with its own body
-        std::for_each(rq.begin(), rq.end(), [&](auto& snake_segment){
+        std::for_each(snakeBody.begin(), snakeBody.end(), [&](auto& snake_segment){
+
+            //for debugging
+            /* std::cout << "Head x: " << head.x << "\nHead y: " << head.y;
+            std::cout << "\nSegment x: " << snake_segment.x << "\nSegment y: " << snake_segment.y << "\n\n"; */
+            
             if( (head.x == snake_segment.x) && (head.y == snake_segment.y) )
             {
-                size = 0;
                 dir = STOP;
+                size = 0;
             }
         });
 
         // this handles if the snake has hit the borders
-        if( head.x >= 890 )
+        if( head.x >= 880 )
         {
             dir = STOP;
-            head.x = 890;
+            head.x = 880;
         }
-        else if( head.x <= 0 )
+        else if( head.x <= 10 )
         {
             dir = STOP;
-            head.x = 0;
+            head.x = 10;
         }
-        else if ( head.y >= 690 )
+        else if ( head.y >= 680 )
         {
             dir = STOP;
-            head.y = 690;
+            head.y = 680;
         }
-        else if ( head.y <= 0 )
+        else if ( head.y <= 10 )
         {
             dir = STOP;
-            head.y = 0;
+            head.y = 10;
         }
 
         //make snake go big
-        rq.push_front(head);
+        snakeBody.push_front(head);
         
         //prevents snake from being longer than the size variable
-        while(rq.size() > size) 
+        while(snakeBody.size() > size) 
         {
-            rq.pop_back();
+            snakeBody.pop_back();
         }
 
         //handles the movement
@@ -201,9 +222,9 @@ int main(int argc, char* argv[])
         SDL_RenderClear(renderer);
 
         //snake color
-        color.changeColor();
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-        std::for_each(rq.begin(), rq.end(), [&](auto& snake_segment)
+        colors.changeColor(7);
+        SDL_SetRenderDrawColor(renderer, colors.r, colors.g, colors.b, 255);
+        std::for_each(snakeBody.begin(), snakeBody.end(), [&](auto& snake_segment)
         {
             SDL_RenderFillRect(renderer,&snake_segment);
         });
@@ -214,6 +235,12 @@ int main(int argc, char* argv[])
         std::for_each( apples.begin(), apples.end(), [&](auto& apple){
             SDL_RenderFillRect(renderer, &apple);
         });
+
+        SDL_SetRenderDrawColor(renderer, 255,255,255,255);
+        std::for_each(borderBlock.begin(), borderBlock.end(), [&](auto& borderBlock){
+            SDL_RenderFillRect(renderer, &borderBlock);
+        });
+        
 
         SDL_RenderPresent(renderer);//refreshes the window
         SDL_Delay(100 - size*5 );//sets how fast the speed of the game is
