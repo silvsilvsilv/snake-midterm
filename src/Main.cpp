@@ -5,7 +5,6 @@
 #include <deque>
 #include <iostream>
 #include <sstream>
-#include <sdl/SDL_ttf.h>
 
 #define WINDOW_WIDTH 900
 #define WINDOW_LENGTH 700
@@ -66,13 +65,11 @@ Color colors;
 int main(int argc, char* argv[])
 {
     SDL_Init(SDL_INIT_EVERYTHING);
-    TTF_Init();
     auto window = SDL_CreateWindow("Snake by John Silva", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_LENGTH+30, 0);
     auto renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_Surface* icon = IMG_Load("res/anaconda.png");
     SDL_SetWindowIcon(window, icon);
-    TTF_Font* font = TTF_OpenFont("fonts/arial.ttf", 10);
-    
+
    
     SDL_Event e;
     enum Direction
@@ -106,16 +103,6 @@ int main(int argc, char* argv[])
         borderBlock.emplace_back(SDL_Rect{0,i,10,10}); //left part
         borderBlock.emplace_back(SDL_Rect{890,i,10,10}); //right part
     }
-
-
-    std::stringstream str;
-    str << "Score: " << size;
-    auto sstr = str.str();
-
-    SDL_Color white {255,255,255};
-    SDL_Surface* text_surface = TTF_RenderText_Solid(font,sstr.c_str(),white);
-    SDL_Texture* m_textTexture = SDL_CreateTextureFromSurface(renderer, text_surface);
-    SDL_Rect rect {400,565,320,30};
 
     //main game loop
     while(running)
