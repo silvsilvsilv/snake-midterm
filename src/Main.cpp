@@ -6,8 +6,8 @@
 #include <iostream>
 #include <sstream>
 
-#define WINDOW_WIDTH 900
-#define WINDOW_LENGTH 700
+#define WIDTH 900
+#define HEIGHT 700
 #define null ' '
 
 class Color
@@ -65,12 +65,17 @@ Color colors;
 int main(int argc, char* argv[])
 {
     SDL_Init(SDL_INIT_EVERYTHING);
-    auto window = SDL_CreateWindow("Snake by John Silva", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_LENGTH+30, 0);
+    auto window = SDL_CreateWindow("Snake by John Silva", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
     auto renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_Surface* icon = IMG_Load("res/anaconda.png");
     SDL_SetWindowIcon(window, icon);
 
-   
+    SDL_Surface* imageSurface = NULL;
+    SDL_Surface* windowSurface = NULL;
+    windowSurface = SDL_GetWindowSurface(window);
+
+    imageSurface = IMG_Load("res/you dead.png");
+
     SDL_Event e;
     enum Direction
     {
@@ -84,7 +89,7 @@ int main(int argc, char* argv[])
     bool running = true;
     int dir = 0;
 
-    SDL_Rect head {(WINDOW_WIDTH/2),(WINDOW_LENGTH/2),10,10}; //initializing of the "snake" in the middle of the window
+    SDL_Rect head {(WIDTH/2),(HEIGHT/2),10,10}; //initializing of the "snake" in the middle of the window
     
     std::deque<SDL_Rect> snakeBody;
     int size = 0;
@@ -93,12 +98,12 @@ int main(int argc, char* argv[])
     int numOfApple = 0;
 
     std::vector<SDL_Rect> borderBlock;
-    for(int i = 0 ;i <= WINDOW_WIDTH-10; i++)//for x
+    for(int i = 0 ;i <= WIDTH-10; i++)//for x
     {
         borderBlock.emplace_back(SDL_Rect{i,0,10,10}); //upper part
         borderBlock.emplace_back(SDL_Rect{i,690,10,10}); //bottom part
     }
-    for(int i = 0; i <= WINDOW_LENGTH - 10; i++)// for y
+    for(int i = 0; i <= HEIGHT - 10; i++)// for y
     {
         borderBlock.emplace_back(SDL_Rect{0,i,10,10}); //left part
         borderBlock.emplace_back(SDL_Rect{890,i,10,10}); //right part
@@ -131,6 +136,7 @@ int main(int argc, char* argv[])
                     case SDLK_d: (dir != LEFT)? dir = RIGHT : null; break;
 
                     case SDLK_RETURN: head.x=450; head.y=350; dir = DOWN; break;
+                    case SDLK_0: running = false; break;
                 }
             }
         }
@@ -243,11 +249,24 @@ int main(int argc, char* argv[])
             SDL_RenderFillRect(renderer, &borderBlock);
         });
         
-
         SDL_RenderPresent(renderer);//refreshes the window
         SDL_Delay(100 - size*5 );//sets how fast the speed of the game is
 
     }
+    // SDL_Rect dstrect {WIDTH/2,HEIGHT/2,0,0};
+
+    if(!running)
+    {
+        SDL_BlitSurface(imageSurface, NULL, windowSurface, NULL);
+        SDL_UpdateWindowSurface(window);
+        SDL_FreeSurface(imageSurface);
+        SDL_FreeSurface(windowSurface);
+        imageSurface = NULL;
+        windowSurface = NULL;
+        SDL_Delay(5000);
+    }
+       
+    SDL_DestroyWindow(window);
 
     return 0;
 }
