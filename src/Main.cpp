@@ -13,12 +13,24 @@
 class Color
 {
     public:
+        //values for r, g and b
         int r,g,b;
-
+        
+        /* function to changecolor, by default gives a random value
+        [1] red, 
+        [2] orange,
+        [3] yellow, 
+        [4] lime, 
+        [5] green, 
+        [6] blue-green, 
+        [7] cyan, 
+        [8] cerulean, 
+        [9] blue, 
+        [10] purple,
+        [11] magenta,
+        [12] pink */
         void changeColor(int color = rand()%12+1)
             {
-                
-
                 switch( color )
                 {
                     case 1: //red
@@ -61,7 +73,30 @@ class Color
             }
 };
 
-Color colors;
+class Snakes
+{
+    public:
+        const char* snake;
+
+        void changeSnake(int x = rand()%9)
+        {
+            switch(x)
+            {
+                case 0: snake = "res/snakes/1.jpg"; break;
+                case 1: snake = "res/snakes/2.jpg"; break;
+                case 2: snake = "res/snakes/3.jpg"; break;
+                case 3: snake = "res/snakes/4.jpg"; break;
+                case 4: snake = "res/snakes/5.jpg"; break;
+                case 5: snake = "res/snakes/6.jpg"; break;
+                case 6: snake = "res/snakes/7.jpg"; break;
+                case 7: snake = "res/snakes/8.jpg"; break;
+                case 8: snake = "res/snakes/9.jpg"; break;
+                default: break;
+            }
+        }
+};
+
+Color colors; Snakes snakePic;
 int main(int argc, char* argv[])
 {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -74,7 +109,7 @@ int main(int argc, char* argv[])
     SDL_Surface* windowSurface = NULL;
     windowSurface = SDL_GetWindowSurface(window);
 
-    imageSurface = IMG_Load("res/you dead.png");
+    
 
     SDL_Event e;
     enum Direction
@@ -87,6 +122,7 @@ int main(int argc, char* argv[])
     };
 
     bool running = true;
+    bool isGameOver = false;
     int dir = 0;
 
     SDL_Rect head {(WIDTH/2),(HEIGHT/2),10,10}; //initializing of the "snake" in the middle of the window
@@ -97,7 +133,7 @@ int main(int argc, char* argv[])
     std::vector<SDL_Rect> apples;
     int numOfApple = 0;
 
-    std::vector<SDL_Rect> borderBlock;
+    std::vector<SDL_Rect> borderBlock;//adds the border
     for(int i = 0 ;i <= WIDTH-10; i++)//for x
     {
         borderBlock.emplace_back(SDL_Rect{i,0,10,10}); //upper part
@@ -135,12 +171,23 @@ int main(int argc, char* argv[])
                     case SDLK_a: (dir != RIGHT)? dir = LEFT : null; break;
                     case SDLK_d: (dir != LEFT)? dir = RIGHT : null; break;
 
-                    case SDLK_RETURN: head.x=450; head.y=350; dir = DOWN; break;
-                    case SDLK_0: running = false; break;
+                    case SDLK_RETURN: 
+                        head.x=450; 
+                        head.y=350; 
+                        dir = DOWN; 
+                        isGameOver = false;
+                        size = 0; 
+                    break;
+                    case SDLK_ESCAPE: running = false; break;
                 }
             }
         }
 
+        snakePic.changeSnake();//changes snake picture for when you die
+        imageSurface = IMG_Load(snakePic.snake); // loads snake picture
+
+    if(isGameOver == false)
+    {
         if( numOfApple == 0 ) //checks if there are no apples in the screen and puts one in a random spot
         {
             int x = (rand()%88*10) + 10 ;
@@ -185,21 +232,25 @@ int main(int argc, char* argv[])
         if( head.x >= 880 )
         {
             dir = STOP;
+            isGameOver = true;
             head.x = 880;
         }
         else if( head.x <= 10 )
         {
             dir = STOP;
+            isGameOver = true;
             head.x = 10;
         }
         else if ( head.y >= 680 )
         {
             dir = STOP;
+            isGameOver = true;
             head.y = 680;
         }
         else if ( head.y <= 10 )
         {
             dir = STOP;
+            isGameOver = true;
             head.y = 10;
         }
 
@@ -251,11 +302,9 @@ int main(int argc, char* argv[])
         
         SDL_RenderPresent(renderer);//refreshes the window
         SDL_Delay(100 - size*5 );//sets how fast the speed of the game is
-
+    
     }
-    // SDL_Rect dstrect {WIDTH/2,HEIGHT/2,0,0};
-
-    if(!running)
+    else
     {
         SDL_BlitSurface(imageSurface, NULL, windowSurface, NULL);
         SDL_UpdateWindowSurface(window);
@@ -263,8 +312,11 @@ int main(int argc, char* argv[])
         SDL_FreeSurface(windowSurface);
         imageSurface = NULL;
         windowSurface = NULL;
-        SDL_Delay(5000);
     }
+    }
+    // SDL_Rect dstrect {WIDTH/2,HEIGHT/2,0,0};
+
+    
        
     SDL_DestroyWindow(window);
 
