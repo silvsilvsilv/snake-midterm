@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <deque>
 #include <iostream>
-#include <sstream>
+#include <string>
+#include <cstring>
 
 #define WIDTH 900
 #define HEIGHT 700
@@ -78,11 +79,12 @@ class Snakes
     public:
         const char* snake;
 
-        void changeSnake(int x = rand()%9)
-        {
+        void changeSnake(int x = rand()%8)
+        {   
+            x++;
             switch(x)
             {
-                case 0: snake = "res/snakes/1.jpg"; break;
+                // case 0: snake = "res/snakes/1.jpg"; break;
                 case 1: snake = "res/snakes/2.jpg"; break;
                 case 2: snake = "res/snakes/3.jpg"; break;
                 case 3: snake = "res/snakes/4.jpg"; break;
@@ -96,7 +98,28 @@ class Snakes
         }
 };
 
-Color colors; Snakes snakePic;
+class Title
+{
+    public:
+        const char* title;
+
+        void setTitle(int size, bool isGameOver)
+        {
+            if(isGameOver)
+            {
+                title = "Snake by John Silva | Game Over!";
+            }
+            else
+            {
+                std::string str = "Snake by John Silva | Score is: " + std::to_string(size*10);
+                title = str.c_str();
+            }
+            
+        }
+};
+
+Color colors; Snakes snakePic; Title gameTitle;
+
 int main(int argc, char* argv[])
 {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -109,8 +132,6 @@ int main(int argc, char* argv[])
     SDL_Surface* windowSurface = NULL;
     windowSurface = SDL_GetWindowSurface(window);
 
-    
-
     SDL_Event e;
     enum Direction
     {
@@ -121,14 +142,18 @@ int main(int argc, char* argv[])
         STOP
     };
 
-    bool running = true;
+    bool gameIsRunning = true;
     bool isGameOver = false;
-    int dir = 0;
+    int dir1 = 0;
+    int dir2 = 0;
 
     SDL_Rect head {(WIDTH/2),(HEIGHT/2),10,10}; //initializing of the "snake" in the middle of the window
+    SDL_Rect head2 {((WIDTH/2)-20),HEIGHT/2,10,10};
     
     std::deque<SDL_Rect> snakeBody;
-    int size = 0;
+    std::deque<SDL_Rect> snakeBody2;
+    int size1 = 0;
+    int size2 = 0;
 
     std::vector<SDL_Rect> apples;
     int numOfApple = 0;
@@ -146,45 +171,52 @@ int main(int argc, char* argv[])
     }
 
     //main game loop
-    while(running)
+    while(gameIsRunning)
     {
         while(SDL_PollEvent(&e)) //handle input
         {
             if(e.type == SDL_QUIT) 
             { 
-                running = false; 
+                gameIsRunning = false; 
             }
 
-            if(e.type == SDL_KEYDOWN)
+            if( (e.type == SDL_KEYDOWN) && (isGameOver == false) )//handles movement when player hasnt died
             {
                 switch(e.key.keysym.sym) //controls 
                 {
                     //arrow controls
-                    case SDLK_DOWN: (dir != UP)? dir = DOWN : null; break;
-                    case SDLK_UP: (dir != DOWN)? dir = UP : null; break;
-                    case SDLK_LEFT: (dir != RIGHT)? dir = LEFT : null; break;
-                    case SDLK_RIGHT: (dir != LEFT)? dir = RIGHT : null; break;
+                    case SDLK_DOWN: (dir1 != UP)? dir1 = DOWN : null; break;
+                    case SDLK_UP: (dir1 != DOWN)? dir1 = UP : null; break;
+                    case SDLK_LEFT: (dir1 != RIGHT)? dir1 = LEFT : null; break;
+                    case SDLK_RIGHT: (dir1 != LEFT)? dir1= RIGHT : null; break;
 
                     //wasd controls
-                    case SDLK_s: (dir != UP)? dir = DOWN : null; break;
-                    case SDLK_w: (dir != DOWN)? dir = UP : null; break;
-                    case SDLK_a: (dir != RIGHT)? dir = LEFT : null; break;
-                    case SDLK_d: (dir != LEFT)? dir = RIGHT : null; break;
-
+                    case SDLK_s: (dir2 != UP)? dir2 = DOWN : null; break;
+                    case SDLK_w: (dir2 != DOWN)? dir2 = UP : null; break;
+                    case SDLK_a: (dir2 != RIGHT)? dir2 = LEFT : null; break;
+                    case SDLK_d: (dir2 != LEFT)? dir2 = RIGHT : null; break;
+                }
+            }
+            else if( (e.type == SDL_KEYDOWN) && (isGameOver == true) )//when player has died, has choice of playing again or exiting
+            {
+                switch(e.key.keysym.sym)
+                {
+                    //non gameplay controls
                     case SDLK_RETURN: 
-                        head.x=450; 
-                        head.y=350; 
-                        dir = DOWN; 
-                        isGameOver = false;
-                        size = 0; 
+                    head.x=450; 
+                    head.y=350; 
+                    dir1 = DOWN; 
+                    dir2 = DOWN;
+                    isGameOver = false;
+                    size1 = 0; 
+                    size2 = 0;
                     break;
-                    case SDLK_ESCAPE: running = false; break;
+                    
+                    case SDLK_ESCAPE: gameIsRunning = false; 
+                    break;
                 }
             }
         }
-
-        snakePic.changeSnake();//changes snake picture for when you die
-        imageSurface = IMG_Load(snakePic.snake); // loads snake picture
 
     if(isGameOver == false)
     {
@@ -194,7 +226,7 @@ int main(int argc, char* argv[])
             int y = (rand()%68*10) + 10;
             int w = 10;
             int h = 10;
-            apples.emplace_back(SDL_Rect{x, y,w,h});
+            apples.emplace_back(SDL_Rect{x,y,w,h});
 
             //for debugging
             // std::cout << "X is: " << x << "\nY is: " << y << "\n\n";
@@ -204,17 +236,26 @@ int main(int argc, char* argv[])
 
         //collision detection
         std::for_each( apples.begin(), apples.end(), [&](auto& apple){
+            
             if( (head.x == apple.x) && (head.y == apple.y) )
             {
-                size += 1;              
+                size1 += 1;              
                 apple.x = -10;
                 apple.y = -10;
                 numOfApple = 0;  
+            }
+            else if( (head2.x == apple.x) && (head2.y == apple.y) )
+            {
+                size2 += 1;
+                apple.x = -10;
+                apple.y = -10;
+                numOfApple = 0;
             }
         });
 
         //handles death conditions for snake
         //this handles if snake has collided with its own body
+        //snake 1
         std::for_each(snakeBody.begin(), snakeBody.end(), [&](auto& snake_segment){
 
             //for debugging
@@ -223,56 +264,118 @@ int main(int argc, char* argv[])
             
             if( (head.x == snake_segment.x) && (head.y == snake_segment.y) )
             {
-                dir = STOP;
-                size = 0;
+                dir1 = STOP;
+                size1 = 0;
+                isGameOver = true;
             }
         });
 
-        // this handles if the snake has hit the borders
+        //snake 2
+         std::for_each(snakeBody2.begin(), snakeBody2.end(), [&](auto& snake_segment){
+
+            //for debugging
+            /* std::cout << "Head x: " << head.x << "\nHead y: " << head.y;
+            std::cout << "\nSegment x: " << snake_segment.x << "\nSegment y: " << snake_segment.y << "\n\n"; */
+            
+            if( (head2.x == snake_segment.x) && (head2.y == snake_segment.y) )
+            {
+                dir2 = STOP;
+                size1 = 0;
+                isGameOver = true;
+            }
+        });
+
+        // this handles if the snake1 has hit the borders
         if( head.x >= 880 )
         {
-            dir = STOP;
+            dir1 = STOP;
             isGameOver = true;
             head.x = 880;
         }
         else if( head.x <= 10 )
         {
-            dir = STOP;
+            dir1 = STOP;
             isGameOver = true;
             head.x = 10;
         }
         else if ( head.y >= 680 )
         {
-            dir = STOP;
+            dir1 = STOP;
             isGameOver = true;
             head.y = 680;
         }
         else if ( head.y <= 10 )
         {
-            dir = STOP;
+            dir1 = STOP;
+            isGameOver = true;
+            head.y = 10;
+        }
+        
+        //snake 2
+        if( head2.x >= 880 )
+        {
+            dir2 = STOP;
+            isGameOver = true;
+            head.x = 880;
+        }
+        else if( head2.x <= 10 )
+        {
+            dir2 = STOP;
+            isGameOver = true;
+            head.x = 10;
+        }
+        else if ( head2.y >= 680 )
+        {
+            dir2 = STOP;
+            isGameOver = true;
+            head.y = 680;
+        }
+        else if ( head2.y <= 10 )
+        {
+            dir2 = STOP;
             isGameOver = true;
             head.y = 10;
         }
 
         //make snake go big
         snakeBody.push_front(head);
+        snakeBody2.push_front(head2);
         
         //prevents snake from being longer than the size variable
-        while(snakeBody.size() > size) 
+        //snake 1
+        while( (snakeBody.size() > size1) ) 
         {
             snakeBody.pop_back();
         }
-
-        //handles the movement
-        switch (dir)
+        //snake 2
+        while( (snakeBody2.size() > size2) )
         {
-        case DOWN: head.y +=10;   
+            snakeBody2.pop_back();
+        }
+
+        //handles the movement for snake 1
+        switch (dir1)
+        {
+        case DOWN: head.y +=10;    
             break;
-        case UP: head.y -= 10;
+        case UP: head.y -= 10; 
             break;
-        case LEFT: head.x -= 10;
+        case LEFT: head.x -= 10; 
             break;
-        case RIGHT: head.x += 10;
+        case RIGHT: head.x += 10; 
+            break;
+        }
+
+        //snake 2
+        switch (dir2)
+        {
+        case DOWN: head2.y += 10;   
+            break;
+        case UP:  head2.y -= 10;
+            break;
+        case LEFT:  head2.x -= 10;
+            break;
+        case RIGHT:  head2.x += 10;
             break;
         }
 
@@ -289,6 +392,15 @@ int main(int argc, char* argv[])
         });
         SDL_RenderFillRect(renderer, &head);
 
+
+        colors.changeColor(5);
+        SDL_SetRenderDrawColor(renderer, colors.r, colors.g, colors.b, 255);
+        std::for_each(snakeBody2.begin(), snakeBody2.end(), [&](auto& snake_segment)
+        {
+            SDL_RenderFillRect(renderer,&snake_segment);
+        });
+        SDL_RenderFillRect(renderer, &head2);
+
         // apple color
         SDL_SetRenderDrawColor(renderer, 255,0,0,255);
         std::for_each( apples.begin(), apples.end(), [&](auto& apple){
@@ -301,11 +413,15 @@ int main(int argc, char* argv[])
         });
         
         SDL_RenderPresent(renderer);//refreshes the window
-        SDL_Delay(100 - size*5 );//sets how fast the speed of the game is
+        SDL_Delay(100 - size1*5 );//sets how fast the speed of the game is
     
     }
     else
     {
+        snakePic.changeSnake();//changes snake picture for when you die
+        imageSurface = IMG_Load(snakePic.snake); // loads snake picture
+
+        //sdl image shenanigans
         SDL_BlitSurface(imageSurface, NULL, windowSurface, NULL);
         SDL_UpdateWindowSurface(window);
         SDL_FreeSurface(imageSurface);
@@ -313,11 +429,11 @@ int main(int argc, char* argv[])
         imageSurface = NULL;
         windowSurface = NULL;
     }
-    }
-    // SDL_Rect dstrect {WIDTH/2,HEIGHT/2,0,0};
 
-    
-       
+        gameTitle.setTitle(size1,isGameOver);
+        SDL_SetWindowTitle(window, gameTitle.title );
+    }
+     
     SDL_DestroyWindow(window);
 
     return 0;

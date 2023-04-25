@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "MakeFile": "makefile",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -44,6 +45,7 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "cstring": "cpp"
     }
 }
